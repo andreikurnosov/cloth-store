@@ -13,6 +13,8 @@ const config = {
 	measurementId: 'G-V3C47G1VYT'
 };
 
+firebase.initializeApp(config);
+
 export const createUserProfileDocument = async (userAuth, additionalData) => {
 	if (!userAuth) return;
 	const userRef = firestore.doc(`users/${userAuth.uid}`);
@@ -28,8 +30,8 @@ export const createUserProfileDocument = async (userAuth, additionalData) => {
 				createdAt,
 				...additionalData
 			})
-		} catch (err) {
-				console.log('error creating user', err.message);
+		} catch (error) {
+				console.log('error creating user', error.message);
 		}
 	} 
 	return userRef;
@@ -64,16 +66,21 @@ export const convertCollectionsSnapshotToMap = (collections) => {
 	}, {})
 };
 
-firebase.initializeApp(config);
+
+export const getCurrentUser = () => {
+	return new Promise((resolve, reject) => {
+		const unsubscribe = auth.onAuthStateChanged(userAuth => {
+			unsubscribe();
+			resolve(userAuth);
+		}, reject);
+	})
+}
 
 export const auth = firebase.auth();
 export const firestore = firebase.firestore();
 
-const provider = new firebase.auth.GoogleAuthProvider();
-// TODO: some error with popup, i just keep moving and comeback to this problem later
-// provider.addScope('profile');
-// provider.addScope('email');
-// provider.setCustomParameters({ display: 'popup' });
+export const googleProvider = new firebase.auth.GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+export const signInWithGoogle = () => auth.signInWithPopup(googleProvider);
 
-export const signInWithGoogle = () => auth.signInWithRedirect(provider);
 export default firebase;
